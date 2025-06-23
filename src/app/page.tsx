@@ -1,69 +1,74 @@
-import Link from "next/link";
+"use client";
+import { useState } from "react";
+import { Textarea } from "./_components/ui/textarea";
+import { Button } from "./_components/ui/button";
+import { Search, Star } from "lucide-react";
 
-import { LatestPost } from "~/app/_components/post";
-import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+interface Movie {
+  id: number;
+  name: string;
+  stars: number;
+}
 
-export default async function Home() {
-  const hello = await api.post.hello({ text: "from tRPC" });
-  const session = await auth();
+export default function Home() {
+  const [prompt, setPrompt] = useState<string>("");
+  const [movies, setMovies] = useState<Movie[]>([]);
 
-  if (session?.user) {
-    void api.post.getLatest.prefetch();
-  }
+  const handleClick = async () => {
+    const res = await fetch("/api/recommendations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt }),
+    });
+    const data: Movie[] = await res.json();
+    setMovies(data);
+  };
 
   return (
-    <HydrateClient>
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-        <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-          <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
-            Create <span className="text-[hsl(280,100%,70%)]">T3</span> App
-          </h1>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-              href="https://create.t3.gg/en/usage/first-steps"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">First Steps →</h3>
-              <div className="text-lg">
-                Just the basics - Everything you need to know to set up your
-                database and authentication.
-              </div>
-            </Link>
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-              href="https://create.t3.gg/en/introduction"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">Documentation →</h3>
-              <div className="text-lg">
-                Learn more about Create T3 App, the libraries it uses, and how
-                to deploy it.
-              </div>
-            </Link>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-2xl text-white">
-              {hello ? hello.greeting : "Loading tRPC query..."}
-            </p>
+    <main className="min-h-screen bg-[#0d1117] flex flex-col items-center px-4 py-8">
+      <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-orange-500 to-slate-400 text-transparent bg-clip-text mb-4 text-center">
+        Recomendações de Filmes
+      </h1>
+      <p className="text-slate-300 text-center max-w-xl mb-8">
+        Descubra os melhores filmes com nossa inteligência artificial. Faça perguntas em linguagem natural e encontre o filme perfeito para você.
+      </p>
 
-            <div className="flex flex-col items-center justify-center gap-4">
-              <p className="text-center text-2xl text-white">
-                {session && <span>Logged in as {session.user?.name}</span>}
-              </p>
-              <Link
-                href={session ? "/api/auth/signout" : "/api/auth/signin"}
-                className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
-              >
-                {session ? "Sign out" : "Sign in"}
-              </Link>
-            </div>
-          </div>
+      <div className="w-full max-w-2xl bg-[#161b22] p-6 rounded-xl shadow-xl">
+        <Textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          className="w-full h-24 resize-none text-slate-100 bg-[#0d1117] border border-slate-600"
+          placeholder="Ex: Quero um filme de ação dos anos 90, Me recomende uma comédia romântica, Filmes com Tom Hanks"
+        />
 
-          {session?.user && <LatestPost />}
+        <Button
+          onClick={handleClick}
+          className="mt-4 w-full bg-gradient-to-r from-red-600 to-blue-600 text-white flex items-center justify-center gap-2"
+        >
+          <Search className="w-4 h-4" />
+          Encontrar Filme
+        </Button>
+      </div>
+
+      {movies.length > 0 && (
+        <div className="mt-8 w-full max-w-6xl">
+          <h2 className="text-xl text-slate-100 mb-4">Filmes em Destaque</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+            {movies.map((movie) => (
+              <div key={movie.id} className="bg-[#161b22] p-4 rounded-lg">
+                <div className="flex items-center mb-2">
+                  {Array(movie.stars)
+                    .fill(0)
+                    .map((_, i) => (
+                      <Star key={i} className="w-4 h-4 text-yellow-400" />
+                    ))}
+                </div>
+                <h3 className="text-slate-100 font-semibold">{movie.name}</h3>
+              </div>
+            ))}
+          </div>
         </div>
-      </main>
-    </HydrateClient>
+      )}
+    </main>
   );
 }
