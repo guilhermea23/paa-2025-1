@@ -20,7 +20,7 @@ export default function Home() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt }),
     });
-    const data: Movie[] = await res.json();
+    const data: Movie[] = await res.json() as Movie[];
     setMovies(data);
   };
 
@@ -41,7 +41,7 @@ export default function Home() {
           placeholder="Ex: Quero um filme de ação dos anos 90, Me recomende uma comédia romântica, Filmes com Tom Hanks"
         />
 
-        <Button
+        <Button 
           onClick={handleClick}
           className="mt-4 w-full bg-gradient-to-r from-red-600 to-blue-600 text-white flex items-center justify-center gap-2"
         >
