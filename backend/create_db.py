@@ -20,11 +20,11 @@ with open("backend/bdPAA.csv", "r", encoding="utf-8") as csvfile:
         if len(linha) != len(cabecalho):
             continue  # Pula linhas com número incorreto de colunas
 
-        row = dict(zip(cabecalho, linha))  # Cria dicionário {coluna: valor}
+        linhas = dict(zip(cabecalho, linha))  # Cria dicionário {coluna: valor}
 
         cursor.execute(
             f"INSERT OR IGNORE INTO filmes ({', '.join(cabecalho)}) VALUES ({', '.join(['?'] * len(cabecalho))})",
-            [row[col] for col in cabecalho],
+            [linhas[coluna] for coluna in cabecalho],
         )
 
     # Finaliza
