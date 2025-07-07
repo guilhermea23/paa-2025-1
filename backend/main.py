@@ -5,7 +5,6 @@ import uuid
 
 app = FastAPI()
 
-
 class PromptRequest(BaseModel):
     prompt: str
 
