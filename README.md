@@ -31,32 +31,53 @@ $ uvicorn main:app --reload
 
 # Front-End
 
-## Create T3 App
+## Passo a passo para executar o front-end do projeto
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+### Pré-requisitos
 
-### What's next? How do I make an app with this?
+Antes de começar, garanta que você tenha as seguintes ferramentas instaladas na sua máquina:
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- [Node.js](https://nodejs.org/) (versão 18.x ou superior)
+- [pnpm](https://pnpm.io/installation) (gerenciador de pacotes)
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+```bash
+npm install -g pnpm
+```
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+1. Navegue para a pasta `frontend`
 
-### Learn More
+2. Instale as dependências
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+```bash
+pnpm install
+```
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+3. Configurar as variáveis de ambiente  
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+```bash
+cp .env.example .env.local
+```
 
-### How do I deploy this?
+4. Sincronizar o Banco de Dados
+
+Este projeto usa o Prisma para gerenciar o banco de dados. Após configurar a DATABASE_URL no passo anterior, rode o seguinte comando para sincronizar o schema do Prisma com o seu banco de dados:
+Bash
+
+```bash
+pnpm db:push
+```
+
+5. Rodar o Projeto
+
+Com tudo configurado, inicie o servidor de desenvolvimento:
+Bash
+
+```bash
+pnpm dev
+```
+ou
+```bash
+npm run dev
+```
 
 Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
