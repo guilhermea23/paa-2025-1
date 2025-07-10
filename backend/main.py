@@ -15,7 +15,7 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-system = RecommendationSystem()
+system = RecommendationSystem("assets/faiss_index.idx", "assets/movie_data.pkl")
 app = FastAPI()
 
 
