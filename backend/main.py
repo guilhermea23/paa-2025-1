@@ -1,10 +1,12 @@
-from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Depends
 from pydantic import BaseModel
-from typing import List
 from datetime import datetime
+from typing import List
 
-import sqlite3
 import logging
+import torch
+import sqlite3
 import json
 
 from core.recommend import RecommendationSystem
@@ -15,8 +17,39 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-system = RecommendationSystem("assets/faiss_index.idx", "assets/movie_data.pkl")
-app = FastAPI()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Loading recommendation system...")
+
+    # --- startup code ---
+    app.state.recommender = RecommendationSystem(
+        index_path="assets/faiss_index.idx",
+        data_path="assets/movie_data.pkl",
+    )
+
+    logger.info("Load completed successfully.")
+    yield
+
+    # --- shutdown code ---
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        torch.mps.empty_cache()
+
+
+app = FastAPI(lifespan=lifespan)
+
+
+def get_db():
+    conn = sqlite3.connect("movies.db")
+    try:
+        conn.row_factory = sqlite3.Row
+        yield conn
+    finally:
+        conn.close()
 
 
 class PromptRequest(BaseModel):
@@ -28,7 +61,7 @@ class Filme(BaseModel):
     nome: str
     sinopse: str
     estrelas: float
-    generos: list[str]
+    generos: List[str]
     data_lancamento: datetime
 
 
@@ -36,13 +69,12 @@ class RecommendationResponse(BaseModel):
     filmes: List[Filme]
 
 
-def get_filmes_by_ids(db_path: str, ids: List[str]) -> List[Filme]:
+def get_filmes_by_ids(db: sqlite3.Connection, ids: List[str]) -> List[Filme]:
     """
     Busca filmes no banco SQLite pelo campo 'id' e retorna uma lista de objetos Filme.
     """
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
+    # db.row_factory = sqlite3.Row
+    cursor = db.cursor()
 
     # Construindo a cláusula IN dinamicamente
     placeholders = ",".join("?" for _ in ids)
@@ -82,45 +114,25 @@ def get_filmes_by_ids(db_path: str, ids: List[str]) -> List[Filme]:
         )
         filmes.append(filme)
 
-    conn.close()
+    db.close()
     return filmes
 
 
 @app.post("/recommendations", response_model=RecommendationResponse)
-def get_recommendations(request: PromptRequest):
+def get_recommendations(
+    request: PromptRequest, db: sqlite3.Connection = Depends(get_db)
+):
+    system: RecommendationSystem = app.state.recommender
     prompt = request.prompt.strip()
 
-    movie_ids = system.search_with_multi_signal_reranking(
-        prompt, candidate_k=10, dense_weight=0.1, cross_weight=0.5, rating_weight=0.4
+    movie_ids = system.search(
+        prompt,
+        final_k=10,
+        candidate_k=50,
+        dense_weight=0.1,
+        cross_weight=0.5,
+        rating_weight=0.4,
     )
-    movies = get_filmes_by_ids("movies.db", movie_ids)
+    movies = get_filmes_by_ids(db, movie_ids)
 
     return RecommendationResponse(filmes=movies)
-
-    # exemplos = {
-    #     "ação": [
-    #         {"nome": "Mad Max: Estrada da Fúria", "estrelas": 5},
-    #         {"nome": "John Wick", "estrelas": 4},
-    #         {"nome": "Velocidade Máxima", "estrelas": 3},
-    #     ],
-    #     "romance": [
-    #         {"nome": "Orgulho e Preconceito", "estrelas": 5},
-    #         {"nome": "La La Land", "estrelas": 4},
-    #         {"nome": "Como Eu Era Antes de Você", "estrelas": 4},
-    #     ],
-    # }
-
-    # if "ação" in prompt.lower():
-    #     categoria = "ação"
-    # else:
-    #     categoria = "romance"
-    # filmes_recomendados = exemplos.get(categoria, [])
-
-    # resposta = RecommendationResponse(
-    #     filmes=[
-    #         Filme(id=str(uuid.uuid4()), nome=filme["nome"], estrelas=filme["estrelas"])
-    #         for filme in filmes_recomendados
-    #     ]
-    # )
-
-    # return resposta
