@@ -1,7 +1,7 @@
 import csv
 import sqlite3
 
-with open("backend/bdPAA.csv", "r", encoding="utf-8") as csvfile:
+with open("movies.csv", "r", encoding="utf-8") as csvfile:
     leitor_csv = csv.reader(csvfile)
     cabecalho = next(leitor_csv)  # Lê a primeira linha (nomes das colunas)
 
@@ -9,7 +9,7 @@ with open("backend/bdPAA.csv", "r", encoding="utf-8") as csvfile:
     colunas_sql = ", ".join([f"{col} TEXT NOT NULL" for col in cabecalho])
 
     # Conexão com o banco de dados
-    connection = sqlite3.connect("backend/bdPAA.db")
+    connection = sqlite3.connect("movies.db")
     cursor = connection.cursor()
 
     # Criar tabela
