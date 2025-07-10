@@ -4,10 +4,20 @@ from typing import List
 from datetime import datetime
 
 import sqlite3
-import uuid
+import logging
 import json
 
+from core.recommend import RecommendationSystem
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s — %(message)s",
+)
+
+logger = logging.getLogger(__name__)
+system = RecommendationSystem()
 app = FastAPI()
+
 
 class PromptRequest(BaseModel):
     prompt: str
@@ -68,7 +78,7 @@ def get_filmes_by_ids(db_path: str, ids: List[str]) -> List[Filme]:
             sinopse=row["overview"],
             estrelas=estrelas,
             generos=generos_list,
-            data_lancamento=data_lancamento
+            data_lancamento=data_lancamento,
         )
         filmes.append(filme)
 
@@ -80,30 +90,37 @@ def get_filmes_by_ids(db_path: str, ids: List[str]) -> List[Filme]:
 def get_recommendations(request: PromptRequest):
     prompt = request.prompt.strip()
 
-    exemplos = {
-        "ação": [
-            {"nome": "Mad Max: Estrada da Fúria", "estrelas": 5},
-            {"nome": "John Wick", "estrelas": 4},
-            {"nome": "Velocidade Máxima", "estrelas": 3},
-        ],
-        "romance": [
-            {"nome": "Orgulho e Preconceito", "estrelas": 5},
-            {"nome": "La La Land", "estrelas": 4},
-            {"nome": "Como Eu Era Antes de Você", "estrelas": 4},
-        ],
-    }
-
-    if "ação" in prompt.lower():
-        categoria = "ação"
-    else:
-        categoria = "romance"
-    filmes_recomendados = exemplos.get(categoria, [])
-
-    resposta = RecommendationResponse(
-        filmes=[
-            Filme(id=str(uuid.uuid4()), nome=filme["nome"], estrelas=filme["estrelas"])
-            for filme in filmes_recomendados
-        ]
+    movie_ids = system.search_with_multi_signal_reranking(
+        prompt, candidate_k=10, dense_weight=0.1, cross_weight=0.5, rating_weight=0.4
     )
+    movies = get_filmes_by_ids("movies.db", movie_ids)
 
-    return resposta
+    return RecommendationResponse(filmes=movies)
+
+    # exemplos = {
+    #     "ação": [
+    #         {"nome": "Mad Max: Estrada da Fúria", "estrelas": 5},
+    #         {"nome": "John Wick", "estrelas": 4},
+    #         {"nome": "Velocidade Máxima", "estrelas": 3},
+    #     ],
+    #     "romance": [
+    #         {"nome": "Orgulho e Preconceito", "estrelas": 5},
+    #         {"nome": "La La Land", "estrelas": 4},
+    #         {"nome": "Como Eu Era Antes de Você", "estrelas": 4},
+    #     ],
+    # }
+
+    # if "ação" in prompt.lower():
+    #     categoria = "ação"
+    # else:
+    #     categoria = "romance"
+    # filmes_recomendados = exemplos.get(categoria, [])
+
+    # resposta = RecommendationResponse(
+    #     filmes=[
+    #         Filme(id=str(uuid.uuid4()), nome=filme["nome"], estrelas=filme["estrelas"])
+    #         for filme in filmes_recomendados
+    #     ]
+    # )
+
+    # return resposta

@@ -179,3 +179,5 @@ pyrightconfig.json
 
 node_modules
 .next
+
+backend/assets/*
