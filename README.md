@@ -2,15 +2,27 @@
 
 # Back-End
 
+# Configuração de ambiente
+É recomendado criar um ambiente virtual antes de instalar os pacotes necessários para a execução desse projeto. Dessa forma, tendo o python e pip instalados, execute o seguinte comando:
+
+```
+$ python3 -m venv .venv
+```
+
+Dessa forma você criou uma pasta .venv que simboliza o seu ambiente virtual, separado do resto do seu dispositivo e evitando quaisquer conflitos com outros projetos. Logo em seguida é necessário ativar esse ambiente.
+
+No linux ou mac:
+```
+$ source .venv/bin/activate
+```
+
 ## Configuração da DB
 
-Segue um passo a passo para configuração do banco de dados na pasta `backend`. Como o arquivo de fonte dos filmes excede os 100MB permitido pelo GitHub, a configuração deve ser feita localmente da seguinte maneira:
+Segue um passo a passo para configuração do banco de dados na pasta `backend`. Para evitar problemas de arquivos muito grandes, decidimos não incluir o banco de dados sqlite no repositório. Dessa forma ele deve ser carregado a partir do arquivo `movies.csv`. Para isso, dentro do diretório `backend` execute o seguinte comando:
 
-1. Baixe o arquivo fonte no formato `.csv` dentro da pasta de trabalho (`backend`)
-
-2. Após isso renomeie o arquivo para __bdPAA.csv__
-
-3. Execute o arquivo  `backend/create_db.py` apenas uma vez para não criar um banco de dados com duplicatas
+```
+$ python3 create_db.py
+```
 
 ## Como rodar
 ```
