@@ -9,3 +9,8 @@ Como o arquivo de fonte dos filmes excede os 100MB permitido pelo GitHub, a conf
 2. Após isso renomeie o arquivo para __bdPAA.csv__
 
 3. Execute o arquivo  `backend/create_db.py` apenas uma vez para não criar um banco de dados com duplicatas
+
+## Como rodar
+```
+$ uvicorn main:app --reload
+```
