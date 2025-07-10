@@ -31,7 +31,7 @@ class RecommendationSystem:
         rating_boost=True,
         normalize_scores=True,
     ):
-        self.logger.info(f"🔍 Multi-signal search: '{query}'")
+        self.logger.info(f"Multi-signal search: '{query}'")
         self.logger.info(
             f"Weights - Dense: {dense_weight:.1f}, Cross: {cross_weight:.1f}, Rating: {rating_weight:.1f}"
         )
@@ -44,7 +44,7 @@ class RecommendationSystem:
         top_indices = np.argsort(similarities)[-candidate_k:][::-1]
         stage1_time = time.time() - start_time
 
-        self.logger.info(f"  ✅ Dense retrieval: {stage1_time*1000:.1f}ms")
+        self.logger.info(f"Dense retrieval: {stage1_time*1000:.1f}ms")
 
         # Prepare candidates for reranking
         candidates = []
@@ -61,7 +61,7 @@ class RecommendationSystem:
             )
 
         # Stage 2: Multi-signal reranking
-        self.logger.info(f"Stage 2: Multi-signal reranking...")
+        self.logger.info("Stage 2: Multi-signal reranking...")
         start_time = time.time()
 
         # Get cross-encoder scores
@@ -106,49 +106,14 @@ class RecommendationSystem:
         )
 
         stage2_time = time.time() - start_time
-        self.logger.info(f"  ✅ Multi-signal reranking: {stage2_time*1000:.1f}ms")
-        self.logger.info(f"  ✅ Total time: {(stage1_time + stage2_time)*1000:.1f}ms")
+        self.logger.info(f"Multi-signal reranking: {stage2_time*1000:.1f}ms")
+        self.logger.info(f"Total time: {(stage1_time + stage2_time)*1000:.1f}ms")
 
         results: list[str] = []
         for i, candidate in enumerate(reranked_candidates[:final_k], 1):
             results.append(str(candidate["idx"]))
 
         return results
-
-
-        # Format and display results
-        # results = []
-        # for i, candidate in enumerate(reranked_candidates[:final_k], 1):
-        #     movie = candidate["movie"]
-        #     year = (
-        #         movie["release_date"][:4] if pd.notna(movie["release_date"]) else "N/A"
-        #     )
-
-        #     result = {
-        #         "rank": i,
-        #         "title": movie["title"],
-        #         "year": year,
-        #         "rating": movie["vote_average"],
-        #         "dense_score": candidate["dense_score"],
-        #         "cross_score": candidate["cross_score"],
-        #         "rating_score": candidate.get("rating_score", 0),
-        #         "combined_score": candidate["combined_score"],
-        #         "genres": movie["genres"],
-        #     }
-        #     results.append(result)
-
-        #     self.logger.info(f"{i:2d}. {movie['title']} ({year}) - {movie['vote_average']:.1f}⭐")
-        #     if rating_boost:
-        #         self.logger.info(
-        #             f"    Dense: {candidate['dense_score']:.3f} | Cross: {candidate['cross_score']:.3f} | Rating: {candidate.get('rating_score', 0):.3f} | Combined: {candidate['combined_score']:.3f}"
-        #         )
-        #     else:
-        #         self.logger.info(
-        #             f"    Dense: {candidate['dense_score']:.3f} | Cross: {candidate['cross_score']:.3f} | Combined: {candidate['combined_score']:.3f}"
-        #         )
-        #     self.logger.info(f"    {movie['genres']}")
-
-        # return results
 
     def normalize_score_array(self, scores):
         """Normalize array of scores to [0,1] range"""
