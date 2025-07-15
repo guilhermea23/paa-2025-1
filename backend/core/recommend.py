@@ -52,6 +52,8 @@ class RecommendationSystem:
         faiss_time = (time.time() - faiss_start) * 1000
         self.logger.info(f"FAISS time: {faiss_time:.1f}ms")
 
+        self.logger.info(f"FAISS: ")
+
         # --- Stage 2: cross-encoder + rating reranking ---
 
         # prepare candidate list
@@ -92,12 +94,33 @@ class RecommendationSystem:
         reranked = sorted(candidates, key=lambda x: x["score"], reverse=True)
 
         reranking_time = (time.time() - reranking_start) * 1000
-        total_time = (time.time() - encoding_time) * 1000
+        total_time = time.time() * 1000 - encoding_time
 
         self.logger.info(f"Reranking: {reranking_time:.1f}ms")
         self.logger.info(f"Total: {total_time:.1f}ms")
 
-        return [str(c["idx"]) for c in reranked[:final_k]]
+        # ADD THIS DEBUG CODE before the final return
+        print(f"\n=== DEBUGGING SEARCH RESULTS ===")
+        print(f"Query: '{query}'")
+        print(f"Raw FAISS indices: {indices[0][:5]}")
+        print(f"Raw FAISS scores: {distances[0][:5]}")
+        
+        print(f"\nFinal reranked results (indices as strings):")
+        final_indices = [str(c["idx"]) for c in reranked[:final_k]]
+        print(f"Returning: {final_indices}")
+        
+        print(f"\nCorresponding movies:")
+        for i, idx_str in enumerate(final_indices):
+            idx = int(idx_str)
+            if idx < len(self.movies):
+                movie = self.movies.iloc[idx]
+                print(f"  {i+1}. Index {idx} -> {movie['title']} | {movie['genres']}")
+            else:
+                print(f"  {i+1}. Index {idx} -> INVALID INDEX!")
+        
+        print(f"=== END DEBUG ===\n")
+        
+        return final_indices
 
     def _warmup(self):
         self.dense_model.encode("warmup")

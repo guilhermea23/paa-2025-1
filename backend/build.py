@@ -1,11 +1,12 @@
-# build_faiss_index.py
 import faiss
 import numpy as np
 
-def main(embeddings_path="assets/movie_embeddings_roberta.npy",
-         index_path="assets/faiss_index.idx"):
+def main():
+    embeddings_path = "assets/movie_embeddings_mpnet.npy"
+    index_path = "assets/faiss_index.idx"
+
     # 1) load your precomputed embeddings
-    embeddings = np.load(embeddings_path).astype("float32")
+    embeddings = np.load(embeddings_path)
 
     # 2) normalize if you want inner-product == cosine
     faiss.normalize_L2(embeddings)
