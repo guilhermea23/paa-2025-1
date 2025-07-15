@@ -99,28 +99,15 @@ class RecommendationSystem:
         self.logger.info(f"Reranking: {reranking_time:.1f}ms")
         self.logger.info(f"Total: {total_time:.1f}ms")
 
-        # ADD THIS DEBUG CODE before the final return
-        print(f"\n=== DEBUGGING SEARCH RESULTS ===")
-        print(f"Query: '{query}'")
-        print(f"Raw FAISS indices: {indices[0][:5]}")
-        print(f"Raw FAISS scores: {distances[0][:5]}")
+        result_ids = []
+        for c in reranked[:final_k]:
+            idx = c["idx"]
+            movie = self.movies.iloc[idx]
+            
+            # Use the actual movie ID from your DataFrame
+            result_ids.append(str(movie['id']))
         
-        print(f"\nFinal reranked results (indices as strings):")
-        final_indices = [str(c["idx"]) for c in reranked[:final_k]]
-        print(f"Returning: {final_indices}")
-        
-        print(f"\nCorresponding movies:")
-        for i, idx_str in enumerate(final_indices):
-            idx = int(idx_str)
-            if idx < len(self.movies):
-                movie = self.movies.iloc[idx]
-                print(f"  {i+1}. Index {idx} -> {movie['title']} | {movie['genres']}")
-            else:
-                print(f"  {i+1}. Index {idx} -> INVALID INDEX!")
-        
-        print(f"=== END DEBUG ===\n")
-        
-        return final_indices
+        return result_ids
 
     def _warmup(self):
         self.dense_model.encode("warmup")
