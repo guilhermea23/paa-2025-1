@@ -131,9 +131,9 @@ def get_recommendations(
         prompt,
         final_k=10,
         candidate_k=50,
-        dense_weight=1.0,
-        cross_weight=0.0,
-        rating_weight=0.0,
+        dense_weight=0.1,
+        cross_weight=0.5,
+        rating_weight=0.4,
     )
     movies = get_filmes_by_ids(db, movie_ids)
 
