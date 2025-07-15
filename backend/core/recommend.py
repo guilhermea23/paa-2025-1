@@ -52,6 +52,8 @@ class RecommendationSystem:
         faiss_time = (time.time() - faiss_start) * 1000
         self.logger.info(f"FAISS time: {faiss_time:.1f}ms")
 
+        self.logger.info(f"FAISS: ")
+
         # --- Stage 2: cross-encoder + rating reranking ---
 
         # prepare candidate list
@@ -92,12 +94,20 @@ class RecommendationSystem:
         reranked = sorted(candidates, key=lambda x: x["score"], reverse=True)
 
         reranking_time = (time.time() - reranking_start) * 1000
-        total_time = (time.time() - encoding_time) * 1000
+        total_time = time.time() * 1000 - encoding_time
 
         self.logger.info(f"Reranking: {reranking_time:.1f}ms")
         self.logger.info(f"Total: {total_time:.1f}ms")
 
-        return [str(c["idx"]) for c in reranked[:final_k]]
+        result_ids = []
+        for c in reranked[:final_k]:
+            idx = c["idx"]
+            movie = self.movies.iloc[idx]
+            
+            # Use the actual movie ID from your DataFrame
+            result_ids.append(str(movie['id']))
+        
+        return result_ids
 
     def _warmup(self):
         self.dense_model.encode("warmup")
