@@ -71,9 +71,9 @@ class RecommendationResponse(BaseModel):
 
 def get_filmes_by_ids(db: sqlite3.Connection, ids: List[str]) -> List[Filme]:
     """
-    Busca filmes no banco SQLite pelo campo 'id' e retorna uma lista de objetos Filme.
+    Busca filmes no banco SQLite pelo campo 'id' e retorna uma lista de objetos Filme,
+    preservando a ordem dos ids fornecidos.
     """
-    # db.row_factory = sqlite3.Row
     cursor = db.cursor()
 
     # Construindo a cláusula IN dinamicamente
@@ -86,9 +86,9 @@ def get_filmes_by_ids(db: sqlite3.Connection, ids: List[str]) -> List[Filme]:
     cursor.execute(query, ids)
     rows = cursor.fetchall()
 
-    filmes: List[Filme] = []
+    # Construir um dicionário para acesso rápido
+    filmes_por_id: dict[str, Filme] = {}
     for row in rows:
-        # Parse genres: assume JSON array string ou string separada por vírgulas
         raw_genres: str = row["genres"]
         try:
             generos_list = json.loads(raw_genres)
@@ -98,10 +98,7 @@ def get_filmes_by_ids(db: sqlite3.Connection, ids: List[str]) -> List[Filme]:
         except (json.JSONDecodeError, TypeError):
             generos_list = [g.strip() for g in raw_genres.split(",") if g.strip()]
 
-        # Converter vote_average para inteiro (estrelas)
         estrelas = round(float(row["vote_average"]))
-
-        # Converter data para datetime
         data_lancamento = datetime.fromisoformat(row["release_date"])
 
         filme = Filme(
@@ -112,10 +109,13 @@ def get_filmes_by_ids(db: sqlite3.Connection, ids: List[str]) -> List[Filme]:
             generos=generos_list,
             data_lancamento=data_lancamento,
         )
-        filmes.append(filme)
+        filmes_por_id[str(row["id"])] = filme
 
     db.close()
-    return filmes
+
+    # Retornar na ordem original dos ids
+    return [filmes_por_id[i] for i in ids if i in filmes_por_id]
+
 
 
 @app.post("/recommendations", response_model=RecommendationResponse)
